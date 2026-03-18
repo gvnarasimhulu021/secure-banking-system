@@ -1,5 +1,7 @@
 package com.bankapp.service;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,15 +20,18 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public User registerUser(User user) {
 
-	    if (userRepository.findByEmail(user.getEmail()).isPresent()) {
-	        throw new RuntimeException("Email already registered");
-	    }
+		if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+			throw new RuntimeException("Email already registered");
+		}
 
-	    user.setPassword(passwordEncoder.encode(user.getPassword()));
-	    user.setRole("USER");
-	    return userRepository.save(user);
+		user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+		if (user.getRole() == null || user.getRole().isEmpty()) {
+			user.setRole("USER");
+		}
+
+		return userRepository.save(user);
 	}
-
 
 	@Override
 	public User login(String email, String password) {
@@ -39,6 +44,61 @@ public class UserServiceImpl implements UserService {
 		}
 
 		return user;
+	}
+
+	@Override
+	public User deposit(String email, double amount) {
+
+		User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+
+		user.setBalance(user.getBalance() + amount);
+
+		return userRepository.save(user);
+	}
+
+	@Override
+	public User withdraw(String email, double amount) {
+
+		User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+
+		if (user.getBalance() < amount) {
+			throw new RuntimeException("Insufficient balance");
+		}
+
+		user.setBalance(user.getBalance() - amount);
+
+		return userRepository.save(user);
+	}
+
+	@Override
+	public double getBalance(String email) {
+
+		User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+
+		return user.getBalance();
+	}
+
+	@Override
+	public List<User> getAllUsers() {
+		return userRepository.findAll();
+	}
+
+	@Override
+	public User getUserByEmail(String email) {
+		return userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+	}
+
+	@Override
+	public User updateBalance(String email, double amount) {
+		User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+
+		user.setBalance(amount);
+		return userRepository.save(user);
+	}
+
+	@Override
+	public void deleteUser(Long id) {
+		userRepository.deleteById(id);
 	}
 
 }

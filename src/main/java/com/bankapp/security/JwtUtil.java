@@ -14,17 +14,18 @@ public class JwtUtil {
     private static final SecretKey key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
     private static final long EXPIRATION_TIME = 1000 * 60 * 60; // 1 hour
 
-    // Generate token
-    public static String generateToken(String email) {
+    // 🔐 Generate token with ROLE
+    public static String generateToken(String email, String role) {
         return Jwts.builder()
                 .setSubject(email)
+                .claim("role", role) // 👈 important
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(key)
                 .compact();
     }
 
-    // Validate token
+    // ✅ Validate token
     public static boolean validateToken(String token) {
         try {
             Jwts.parserBuilder()
@@ -37,13 +38,25 @@ public class JwtUtil {
         }
     }
 
-    // Extract email from token
+    // 📧 Extract email
     public static String extractEmail(String token) {
         Claims claims = Jwts.parserBuilder()
                 .setSigningKey(key)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+
         return claims.getSubject();
+    }
+
+    // 👑 Extract role
+    public static String extractRole(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+        return claims.get("role", String.class);
     }
 }

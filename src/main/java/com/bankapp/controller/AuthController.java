@@ -14,27 +14,25 @@ import com.bankapp.service.UserService;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    @Autowired
-    private UserService userService;
+	@Autowired
+	private UserService userService;
 
-    // ================= REGISTER =================
-    @PostMapping("/register")
-    public ResponseEntity<User> register(@RequestBody User user) {
-        User savedUser = userService.registerUser(user);
-        return ResponseEntity.ok(savedUser);
-    }
+	// ================= REGISTER =================
+	@PostMapping("/register")
+	public ResponseEntity<User> register(@RequestBody User user) {
+		User savedUser = userService.registerUser(user);
+		return ResponseEntity.ok(savedUser);
+	}
 
-    // ================= LOGIN (JWT) =================
-    @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
+	// ================= LOGIN (JWT) =================
 
-        // validate email + password
-        userService.login(request.getEmail(), request.getPassword());
+	@PostMapping("/login")
+	public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
 
-        // generate JWT token
-        String token = JwtUtil.generateToken(request.getEmail());
+	    User user = userService.login(request.getEmail(), request.getPassword());
 
-        // return token only (no password)
-        return ResponseEntity.ok(new LoginResponse(token));
-    }
+	    String token = JwtUtil.generateToken(user.getEmail(), user.getRole());
+
+	    return ResponseEntity.ok(new LoginResponse(token));
+	}
 }
