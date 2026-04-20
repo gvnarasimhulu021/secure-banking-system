@@ -10,28 +10,30 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 public class SecurityConfig {
 
-	@Bean
-	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-	    http
-	        .csrf(csrf -> csrf.disable())
+        http
+            .csrf(csrf -> csrf.disable())
 
-	        .authorizeHttpRequests(auth -> auth
-	            .requestMatchers("/api/auth/**").permitAll()
-	            .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
-	            .requestMatchers("/api/account/**").hasAnyAuthority("USER", "ADMIN") // better naming
-	            .anyRequest().authenticated()
-	        )
+            // ✅ ADD THIS LINE (VERY IMPORTANT 🔥)
+            .cors(cors -> {})  
 
-	        // 🔥 VERY IMPORTANT (JWT = stateless)
-	        .sessionManagement(session -> 
-	            session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-	        )
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
+                .requestMatchers("/api/account/**").hasAnyAuthority("USER", "ADMIN")
+                .anyRequest().authenticated()
+            )
 
-	        // 🔥 Add JWT filter
-	        .addFilterBefore(new JwtFilter(), UsernamePasswordAuthenticationFilter.class);
+            // ✅ Stateless session (JWT)
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
 
-	    return http.build();
-	
+            // ✅ JWT filter
+            .addFilterBefore(new JwtFilter(), UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
     }
 }

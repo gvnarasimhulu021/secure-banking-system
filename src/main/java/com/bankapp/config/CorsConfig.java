@@ -14,14 +14,24 @@ public class CorsConfig {
 
         CorsConfiguration config = new CorsConfiguration();
 
+        // ✅ Allow both LOCAL + NETLIFY frontend
         config.setAllowedOrigins(List.of(
-                "http://localhost:5173" // 🔥 YOUR FRONTEND
+                "http://localhost:5173",
+                "https://tourmaline-gingersnap-0d3885.netlify.app"
         ));
 
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        // ✅ Allow all required HTTP methods
+        config.setAllowedMethods(List.of(
+                "GET", "POST", "PUT", "DELETE", "OPTIONS"
+        ));
+
+        // ✅ Allow all headers
         config.setAllowedHeaders(List.of("*"));
+
+        // ✅ Allow credentials (JWT, cookies, etc.)
         config.setAllowCredentials(true);
 
+        // ✅ Apply this config to all endpoints
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();
 
