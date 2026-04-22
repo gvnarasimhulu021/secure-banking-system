@@ -22,33 +22,43 @@ public class JwtFilter extends OncePerRequestFilter {
             FilterChain filterChain)
             throws ServletException, IOException {
 
+        String path = request.getRequestURI();
+
+        // ✅ 1. Allow auth APIs without token
+        if (path.startsWith("/api/auth")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String authHeader = request.getHeader("Authorization");
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-
-            String token = authHeader.substring(7);
-
-            // ❌ INVALID TOKEN → BLOCK
-            if (!JwtUtil.validateToken(token)) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("Invalid or Expired Token");
-                return;
-            }
-
-            // ✅ VALID TOKEN → Extract data
-            String email = JwtUtil.extractEmail(token);
-            String role = JwtUtil.extractRole(token);
-
-            // 🔐 SET AUTHENTICATION WITH ROLE
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            email,
-                            null,
-                            List.of(new SimpleGrantedAuthority(role)) // 👈 VERY IMPORTANT
-                    );
-
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+        // ✅ 2. If no token → allow (Spring will handle security later)
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
         }
+
+        String token = authHeader.substring(7);
+
+        // ❌ Invalid token → block
+        if (!JwtUtil.validateToken(token)) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Invalid or Expired Token");
+            return;
+        }
+
+        // ✅ Valid token → extract data
+        String email = JwtUtil.extractEmail(token);
+        String role = JwtUtil.extractRole(token);
+
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(
+                        email,
+                        null,
+                        List.of(new SimpleGrantedAuthority(role))
+                );
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
         filterChain.doFilter(request, response);
     }
