@@ -23,4 +23,6 @@ public interface UserService {
 	User updateBalance(String email, double amount);
 
 	void deleteUser(Long id);
+
+	void transfer(String fromEmail, String toEmail, double amount);
 }

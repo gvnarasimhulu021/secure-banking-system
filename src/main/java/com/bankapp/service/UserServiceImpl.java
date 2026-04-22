@@ -14,6 +14,8 @@ public class UserServiceImpl implements UserService {
 
 	@Autowired
 	private UserRepository userRepository;
+	@Autowired
+	private TransactionService transactionService;
 
 	private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -99,6 +101,36 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public void deleteUser(Long id) {
 		userRepository.deleteById(id);
+	}
+
+	@Override
+	public void transfer(String fromEmail, String toEmail, double amount) {
+
+		User sender = userRepository.findByEmail(fromEmail).orElseThrow(() -> new RuntimeException("Sender not found"));
+
+		User receiver = userRepository.findByEmail(toEmail)
+				.orElseThrow(() -> new RuntimeException("Receiver not found"));
+
+		if (amount <= 0) {
+			throw new RuntimeException("Invalid amount");
+		}
+
+		if (sender.getBalance() < amount) {
+			throw new RuntimeException("Insufficient balance");
+		}
+
+		// 💸 Deduct from sender
+		sender.setBalance(sender.getBalance() - amount);
+
+		// 💰 Add to receiver
+		receiver.setBalance(receiver.getBalance() + amount);
+
+		userRepository.save(sender);
+		userRepository.save(receiver);
+
+		// 🔥 IMPORTANT PART 
+		transactionService.saveTransaction(fromEmail, "TRANSFER_SENT", amount);
+		transactionService.saveTransaction(toEmail, "TRANSFER_RECEIVED", amount);
 	}
 
 }
