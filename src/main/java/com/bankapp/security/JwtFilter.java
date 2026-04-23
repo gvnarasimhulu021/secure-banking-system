@@ -22,7 +22,7 @@ public class JwtFilter extends OncePerRequestFilter {
             FilterChain filterChain)
             throws ServletException, IOException {
 
-        String path = request.getRequestURI();
+        String path = request.getServletPath();
 
         // ✅ 1. Allow auth APIs without token
         if (path.startsWith("/api/auth")) {
